@@ -1,0 +1,33 @@
+🧪 Testing MCP Server Protocol
+
+Server URL: http://localhost:3000/sse
+============================================================
+
+
+1️⃣ TEST: Initialize Protocol
+============================================================
+
+📤 Sending initialize:
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "test-client",
+      "version": "1.0.0"
+    }
+  }
+}
+✅ Response: 400 Bad Request
+Content-Type: null
+Response body: {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error","data":"InternalServerError: stream is not readable"},"id":null}
+❌ Error: HTTP 400: {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error","data":"InternalServerError: stream is not readable"},"id":null}
+
+❌ TEST SUITE FAILED
+Error: HTTP 400: {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error","data":"InternalServerError: stream is not readable"},"id":null}
+    at sendMCPRequest (/Users/yab/Projects/v5-clear-ai/mcp-server/test-mcp-protocol.ts:49:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async testMCPServer (/Users/yab/Projects/v5-clear-ai/mcp-server/test-mcp-protocol.ts:74:26)

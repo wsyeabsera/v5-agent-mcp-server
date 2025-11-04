@@ -1,0 +1,52 @@
+Starting MCP inspector...
+⚙️ Proxy server listening on localhost:6277
+🔑 Session token: 9c78c12605b95ea85fc0dccf77172a6abd92e6fc9b72bff6eb6bbdb96f360557
+   Use this token to authenticate requests or set DANGEROUSLY_OMIT_AUTH=true to disable auth
+
+🚀 MCP Inspector is up and running at:
+   http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=9c78c12605b95ea85fc0dccf77172a6abd92e6fc9b72bff6eb6bbdb96f360557
+
+🌐 Opening browser...
+New StreamableHttp connection request
+Query parameters: {"url":"http://localhost:3000/sse","transportType":"streamable-http"}
+Created StreamableHttp client transport
+Client <-> Proxy  sessionId: 9ca87d1d-97fc-421c-b683-a2900e008edd
+Received POST message for sessionId 9ca87d1d-97fc-421c-b683-a2900e008edd
+Received GET message for sessionId 9ca87d1d-97fc-421c-b683-a2900e008edd
+Received POST message for sessionId 9ca87d1d-97fc-421c-b683-a2900e008edd
+New StreamableHttp connection request
+Query parameters: {"url":"http://localhost:3000/sse","transportType":"streamable-http"}
+Created StreamableHttp client transport
+Client <-> Proxy  sessionId: e3bc0278-a530-4684-9661-9c37931bf6cd
+Received POST message for sessionId e3bc0278-a530-4684-9661-9c37931bf6cd
+Received GET message for sessionId e3bc0278-a530-4684-9661-9c37931bf6cd
+Received POST message for sessionId e3bc0278-a530-4684-9661-9c37931bf6cd
+Received DELETE message for sessionId e3bc0278-a530-4684-9661-9c37931bf6cd
+Transports removed for sessionId e3bc0278-a530-4684-9661-9c37931bf6cd
+New StreamableHttp connection request
+Query parameters: {"url":"http://localhost:3000/sse","transportType":"streamable-http"}
+Created StreamableHttp client transport
+Client <-> Proxy  sessionId: bcea252e-b58e-4c29-88a9-6002c678fbf4
+Received POST message for sessionId bcea252e-b58e-4c29-88a9-6002c678fbf4
+Received GET message for sessionId bcea252e-b58e-4c29-88a9-6002c678fbf4
+Received POST message for sessionId bcea252e-b58e-4c29-88a9-6002c678fbf4
+Error: 
+🚀 MCP Inspector is up and running at:
+   http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=9c78c12605b95ea85fc0dccf77172a6abd92e6fc9b72bff6eb6bbdb96f360557
+
+🌐 Opening browser...
+
+Failed with exit code: null
+    at Object.error (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/spawn-rx/lib/src/index.js:314:27)
+    at ConsumerObserver.error (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:124:33)
+    at Subscriber._error (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:84:30)
+    at Subscriber.error (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:60:18)
+    at Subscriber._error (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:84:30)
+    at Subscriber.error (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:60:18)
+    at Object.next (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/spawn-rx/lib/src/index.js:286:26)
+    at ConsumerObserver.next (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:113:33)
+    at Subscriber._next (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:80:26)
+    at Subscriber.next (/Users/yab/.npm/_npx/5a9d879542beca3a/node_modules/rxjs/dist/cjs/internal/Subscriber.js:51:18) {
+  exitCode: null,
+  code: null
+}

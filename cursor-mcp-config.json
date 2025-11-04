@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "agents-mcp-server": {
+      "url": "http://localhost:3000/sse",
+      "description": "Waste Management MCP Server - Facilities, Contaminants, Inspections, Shipments, and Contracts"
+    }
+  }
+}
+
