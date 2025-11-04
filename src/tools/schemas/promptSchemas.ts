@@ -36,3 +36,13 @@ export const removePromptSchema = z.object({
   name: z.string().describe('Prompt name'),
 });
 
+export const initPromptsSchema = z.object({
+  force: z.boolean().optional().default(false).describe('If true, update existing prompts; if false, skip duplicates'),
+  source: sourceEnum.optional().default('remote').describe('Source to set for seeded prompts'),
+});
+
+export const getPromptForUserPromptSchema = z.object({
+  userPrompt: z.string().describe('User query or request to find the best prompt for'),
+  topK: z.number().optional().default(3).describe('Number of top prompts to return'),
+});
+

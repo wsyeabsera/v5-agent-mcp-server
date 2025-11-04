@@ -154,3 +154,52 @@ export async function removeHandler<T extends Document>(
   }
 }
 
+/**
+ * Detect operation type from tool name
+ * Query: get_*, list_*
+ * Mutation: create_*, update_*, delete_*
+ */
+export function detectOperationType(toolName: string): 'query' | 'mutation' {
+  const action = toolName.split('_')[0].toLowerCase();
+  
+  if (action === 'get' || action === 'list') {
+    return 'query';
+  }
+  
+  if (action === 'create' || action === 'update' || action === 'delete') {
+    return 'mutation';
+  }
+  
+  // Default to mutation for unknown actions
+  return 'mutation';
+}
+
+/**
+ * Detect entity type from tool name
+ * Extracts entity from tool name after underscore
+ */
+export function detectEntityType(toolName: string): 'facility' | 'shipment' | 'contaminant' | 'contract' | 'inspection' | 'other' {
+  const parts = toolName.toLowerCase().split('_');
+  
+  // Skip the first part (action) and check remaining parts
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    
+    // Handle singular forms
+    if (part === 'facility') return 'facility';
+    if (part === 'shipment') return 'shipment';
+    if (part === 'contaminant') return 'contaminant';
+    if (part === 'contract') return 'contract';
+    if (part === 'inspection') return 'inspection';
+    
+    // Handle plural forms
+    if (part === 'facilities') return 'facility';
+    if (part === 'shipments') return 'shipment';
+    if (part === 'contaminants') return 'contaminant';
+    if (part === 'contracts') return 'contract';
+    if (part === 'inspections') return 'inspection';
+  }
+  
+  return 'other';
+}
+

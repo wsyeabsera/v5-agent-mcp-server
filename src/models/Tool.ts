@@ -5,6 +5,8 @@ export interface ITool extends Document {
   description: string;
   inputSchema: Record<string, any>;
   source: string;
+  operationType?: 'query' | 'mutation';
+  entityType?: 'facility' | 'shipment' | 'contaminant' | 'contract' | 'inspection' | 'other';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +31,16 @@ const ToolSchema = new Schema<ITool>(
       type: String,
       default: 'remote',
       enum: ['remote', 'local'],
+    },
+    operationType: {
+      type: String,
+      enum: ['query', 'mutation'],
+      index: true,
+    },
+    entityType: {
+      type: String,
+      enum: ['facility', 'shipment', 'contaminant', 'contract', 'inspection', 'other'],
+      index: true,
     },
   },
   {

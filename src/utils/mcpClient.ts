@@ -106,6 +106,50 @@ export async function listTools(): Promise<Array<{
 }
 
 /**
+ * List available prompts from remote MCP server
+ */
+export async function listPrompts(): Promise<Array<{
+  name: string;
+  description: string;
+  arguments?: Array<{
+    name: string;
+    description?: string;
+    required?: boolean;
+  }>;
+}>> {
+  const request: JsonRpcRequest = {
+    jsonrpc: '2.0',
+    id: generateRequestId(),
+    method: 'prompts/list',
+  };
+
+  try {
+    const response = await axios.post<JsonRpcResponse>(
+      config.remoteMcpServerUrl,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.data.error) {
+      throw new Error(`MCP prompts/list error: ${response.data.error.message}`);
+    }
+
+    return response.data.result?.prompts || [];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<JsonRpcResponse>;
+      logger.error('[MCP Client] Error listing prompts:', axiosError.message);
+      throw new Error(`Failed to list prompts: ${axiosError.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
  * Execute a tool on the remote MCP server
  */
 export async function callTool(
