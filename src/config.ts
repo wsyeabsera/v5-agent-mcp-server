@@ -11,5 +11,6 @@ export const config = {
   pineconeToolsIndexName: process.env.PINECONE_TOOLS_INDEX_NAME || process.env.PINECONE_INDEX_NAME || '',
   pineconePromptsIndexName: process.env.PINECONE_PROMPTS_INDEX_NAME || '',
   ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
+  aiServerUrl: process.env.AI_SERVER_URL || 'http://localhost:3002/stream',
 };
 

@@ -5,9 +5,32 @@ export async function connectDB(uri: string): Promise<void> {
   try {
     await mongoose.connect(uri);
     logger.info('MongoDB connected successfully');
+    
+    // Clean up old indexes that are no longer needed
+    await cleanupOldIndexes();
   } catch (error) {
     logger.error('MongoDB connection error:', error);
     process.exit(1);
+  }
+}
+
+async function cleanupOldIndexes(): Promise<void> {
+  try {
+    const collection = mongoose.connection.collection('agentconfigs');
+    const indexes = await collection.indexes();
+    
+    // Drop the old unique index on apiModelName if it exists
+    // This was from the old schema and prevents one-to-many relationship
+    const oldIndex = indexes.find((idx: any) => idx.name === 'apiModelName_1');
+    if (oldIndex) {
+      await collection.dropIndex('apiModelName_1');
+      logger.info('Dropped old unique index on apiModelName (apiModelName_1)');
+    }
+  } catch (error: any) {
+    // Index might not exist or already dropped, ignore
+    if (error.code !== 27) { // 27 = IndexNotFound
+      logger.warn('Error cleaning up old indexes:', error.message);
+    }
   }
 }
 
