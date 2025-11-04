@@ -9,7 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "prepare": "npm run build",
-    "inspect": "npx @modelcontextprotocol/inspector http://localhost:3000/sse"
+    "inspect": "npx @modelcontextprotocol/inspector http://localhost:4000/sse"
   },
   "keywords": [
     "mcp",

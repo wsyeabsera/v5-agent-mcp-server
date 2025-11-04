@@ -30,3 +30,8 @@ export const removeToolSchema = z.object({
   name: z.string().describe('Tool name'),
 });
 
+export const initToolsSchema = z.object({
+  force: z.boolean().optional().default(false).describe('If true, update existing tools; if false, skip duplicates'),
+  source: sourceEnum.optional().default('remote').describe('Source to set for seeded tools'),
+});
+

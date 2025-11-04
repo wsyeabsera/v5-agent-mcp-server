@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { Tool, Resource, Prompt } from '../models/index.js';
+import { listTools } from '../utils/mcpClient.js';
+import { logger } from '../utils/logger.js';
 import {
   createHandler,
   getHandler,
@@ -8,6 +10,9 @@ import {
   updateHandler,
   removeHandler,
   createSourceFilter,
+  createSuccessResponse,
+  createErrorResponse,
+  handleToolError,
 } from '../utils/toolHelpers.js';
 import {
   addToolSchema,
@@ -15,6 +20,7 @@ import {
   listToolsSchema,
   updateToolSchema,
   removeToolSchema,
+  initToolsSchema,
 } from './schemas/toolSchemas.js';
 import {
   addResourceSchema,
@@ -77,6 +83,104 @@ export const toolManagementTools = {
     handler: async (args: z.infer<typeof removeToolSchema>) => {
       const validatedArgs = removeToolSchema.parse(args);
       return removeHandler(Tool, { name: validatedArgs.name }, validatedArgs.name, 'Tool', 'Tool');
+    },
+  },
+
+  init_tools: {
+    description: 'Initialize database by fetching tools from remote MCP server and seeding local database',
+    inputSchema: zodToJsonSchema(initToolsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof initToolsSchema>) => {
+      try {
+        const validatedArgs = initToolsSchema.parse(args);
+        const { force, source } = validatedArgs;
+
+        // Fetch tools from remote MCP server
+        let remoteTools;
+        try {
+          remoteTools = await listTools();
+        } catch (error: any) {
+          logger.error('[init_tools] Error fetching tools from remote server:', error);
+          return createErrorResponse(
+            `Failed to fetch tools from remote server: ${error.message}. Make sure the remote MCP server is running on port 3000.`
+          );
+        }
+
+        if (!Array.isArray(remoteTools)) {
+          return createErrorResponse(
+            `Invalid response from remote server: expected array, got ${typeof remoteTools}`
+          );
+        }
+
+        if (remoteTools.length === 0) {
+          return createSuccessResponse({
+            message: 'No tools found on remote server. The remote server may not have any tools available.',
+            added: 0,
+            updated: 0,
+            skipped: 0,
+            total: 0,
+            warning: 'Remote server returned empty tools list',
+          });
+        }
+
+        let added = 0;
+        let updated = 0;
+        let skipped = 0;
+
+        // Process each tool
+        for (const remoteTool of remoteTools) {
+          try {
+            const toolData = {
+              name: remoteTool.name,
+              description: remoteTool.description || '',
+              inputSchema: remoteTool.inputSchema || {},
+              source: source,
+            };
+
+            if (force) {
+              // Update or insert
+              const result = await Tool.findOneAndUpdate(
+                { name: toolData.name },
+                toolData,
+                {
+                  upsert: true,
+                  new: true,
+                  runValidators: true,
+                }
+              );
+              // Check if it was created or updated by checking if it was just created
+              const wasNew = result.createdAt.getTime() === result.updatedAt.getTime();
+              if (wasNew) {
+                added++;
+              } else {
+                updated++;
+              }
+            } else {
+              // Only insert if doesn't exist
+              const existing = await Tool.findOne({ name: toolData.name });
+              if (existing) {
+                skipped++;
+              } else {
+                await Tool.create(toolData);
+                added++;
+              }
+            }
+          } catch (error: any) {
+            // Skip individual tool errors and continue
+            skipped++;
+            continue;
+          }
+        }
+
+        return createSuccessResponse({
+          message: 'Tools initialized successfully',
+          added,
+          updated,
+          skipped,
+          total: remoteTools.length,
+        });
+      } catch (error: any) {
+        return handleToolError(error, 'init_tools');
+      }
     },
   },
 
