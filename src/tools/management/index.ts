@@ -7,6 +7,8 @@ export { searchTools } from './searchTools.js';
 export { agentConfigTools } from './agentConfigTools.js';
 export { availableModelTools } from './availableModelTools.js';
 export { requestTools } from './requestTools.js';
+export { thoughtManagementTools } from './thoughtTools.js';
+export { planManagementTools } from './planTools.js';
 
 // Combine all management tools into a single object for backward compatibility
 import { toolTools } from './toolTools.js';
@@ -17,6 +19,8 @@ import { searchTools } from './searchTools.js';
 import { agentConfigTools } from './agentConfigTools.js';
 import { availableModelTools } from './availableModelTools.js';
 import { requestTools } from './requestTools.js';
+import { thoughtManagementTools } from './thoughtTools.js';
+import { planManagementTools } from './planTools.js';
 
 export const toolManagementTools = {
   ...toolTools,
@@ -27,5 +31,7 @@ export const toolManagementTools = {
   ...agentConfigTools,
   ...availableModelTools,
   ...requestTools,
+  ...thoughtManagementTools,
+  ...planManagementTools,
 };
 

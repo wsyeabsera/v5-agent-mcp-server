@@ -150,6 +150,168 @@ export async function listPrompts(): Promise<Array<{
 }
 
 /**
+ * List available resources from remote MCP server
+ */
+export async function listResources(): Promise<Array<{
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+}>> {
+  const request: JsonRpcRequest = {
+    jsonrpc: '2.0',
+    id: generateRequestId(),
+    method: 'resources/list',
+  };
+
+  try {
+    const response = await axios.post<JsonRpcResponse>(
+      config.remoteMcpServerUrl,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.data.error) {
+      throw new Error(`MCP resources/list error: ${response.data.error.message}`);
+    }
+
+    return response.data.result?.resources || [];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<JsonRpcResponse>;
+      logger.error('[MCP Client] Error listing resources:', axiosError.message);
+      throw new Error(`Failed to list resources: ${axiosError.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Read a resource from remote MCP server by URI
+ */
+export async function readResource(uri: string): Promise<JsonRpcResponse['result']> {
+  const request: JsonRpcRequest = {
+    jsonrpc: '2.0',
+    id: generateRequestId(),
+    method: 'resources/read',
+    params: {
+      uri: uri,
+    },
+  };
+
+  try {
+    logger.info(`[MCP Client] Reading resource: ${uri}`);
+    
+    const response = await axios.post<JsonRpcResponse>(
+      config.remoteMcpServerUrl,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.data.error) {
+      logger.error(`[MCP Client] Resource read error: ${response.data.error.message}`);
+      throw new Error(`MCP resource read error: ${response.data.error.message}`);
+    }
+
+    logger.info(`[MCP Client] Successfully read resource: ${uri}`);
+    return response.data.result;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<JsonRpcResponse>;
+      logger.error(`[MCP Client] Error reading resource ${uri}:`, axiosError.message);
+      
+      // Try to extract error message from response
+      if (axiosError.response?.data?.error) {
+        throw new Error(`Failed to read resource: ${axiosError.response.data.error.message}`);
+      }
+      
+      throw new Error(`Failed to read resource ${uri}: ${axiosError.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get a prompt from the remote MCP server and resolve it with arguments
+ */
+export async function getPrompt(
+  promptName: string,
+  arguments_: Record<string, any> = {}
+): Promise<string> {
+  const request: JsonRpcRequest = {
+    jsonrpc: '2.0',
+    id: generateRequestId(),
+    method: 'prompts/get',
+    params: {
+      name: promptName,
+      arguments: arguments_,
+    },
+  };
+
+  try {
+    logger.info(`[MCP Client] Getting prompt: ${promptName}`, { arguments: arguments_ });
+    
+    const response = await axios.post<JsonRpcResponse>(
+      config.remoteMcpServerUrl,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.data.error) {
+      logger.error(`[MCP Client] Prompt get error: ${response.data.error.message}`);
+      throw new Error(`MCP prompt get error: ${response.data.error.message}`);
+    }
+
+    // MCP prompts/get returns result with content array containing the resolved prompt
+    const result = response.data.result;
+    if (result?.messages && Array.isArray(result.messages) && result.messages.length > 0) {
+      // Extract text from the first message
+      const promptText = result.messages[0]?.content?.text || result.messages[0]?.content || '';
+      logger.info(`[MCP Client] Successfully retrieved prompt: ${promptName}`);
+      return typeof promptText === 'string' ? promptText : JSON.stringify(promptText);
+    }
+
+    // Fallback: if result is a string or has different structure
+    if (typeof result === 'string') {
+      return result;
+    }
+
+    if (result?.content) {
+      return typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+    }
+
+    // If no recognizable format, return the whole result as JSON
+    logger.warn(`[MCP Client] Unexpected prompt response format for ${promptName}`);
+    return JSON.stringify(result);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<JsonRpcResponse>;
+      logger.error(`[MCP Client] Error getting prompt ${promptName}:`, axiosError.message);
+      
+      // Try to extract error message from response
+      if (axiosError.response?.data?.error) {
+        throw new Error(`Failed to get prompt: ${axiosError.response.data.error.message}`);
+      }
+      
+      throw new Error(`Failed to get prompt ${promptName}: ${axiosError.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
  * Execute a tool on the remote MCP server
  */
 export async function callTool(
