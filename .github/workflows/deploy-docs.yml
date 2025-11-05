@@ -30,15 +30,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: |
-          npm ci
-
-      - name: Build documentation
+      - name: Install and build documentation
         working-directory: docs
         run: |
-          npm ci
-          npm run build
+          yarn install --frozen-lockfile
+          yarn build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
