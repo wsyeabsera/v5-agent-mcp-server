@@ -82,7 +82,9 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       collapsed: false,
       items: [
+        'guides/first-workflow',
         'guides/task-executor',
+        'guides/tool-management-complete',
         'guides/agent-configurations',
         'guides/benchmarks',
         'guides/cost-optimization',
@@ -91,13 +93,34 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Examples',
+      collapsed: false,
+      items: [
+        'examples/basic-workflow',
+        'examples/complex-workflow',
+        'examples/memory-integration',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Development',
       collapsed: false,
       items: [
         'development/project-structure',
+        'development/integration',
+        'development/extending',
+        'development/best-practices',
         'development/contributing',
         'development/testing',
         'development/deployment',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Reference',
+      collapsed: false,
+      items: [
+        'reference/faq',
       ],
     },
   ],
