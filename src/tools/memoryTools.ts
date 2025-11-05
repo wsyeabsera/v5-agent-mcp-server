@@ -10,6 +10,7 @@ import {
   queryMemorySchema,
   getMemoryPatternSchema,
   storeInsightSchema,
+  listMemoryPatternsSchema,
 } from './schemas/memorySchemas.js';
 import {
   MemoryPattern,
@@ -111,6 +112,54 @@ export const memoryTools = {
       } catch (error: any) {
         logger.error('[get_memory_pattern] Error:', error);
         return handleToolError(error, 'getting memory pattern');
+      }
+    },
+  },
+
+  list_memory_patterns: {
+    description: 'List memory patterns with optional filters by patternType and context.',
+    inputSchema: zodToJsonSchema(listMemoryPatternsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listMemoryPatternsSchema>) => {
+      try {
+        const validatedArgs = listMemoryPatternsSchema.parse(args);
+        const { patternType, context, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_memory_patterns] Listing patterns with filters:', {
+          patternType,
+          context,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (patternType) filter.patternType = patternType;
+        if (context) {
+          filter.$or = [
+            { 'pattern.query': { $regex: context, $options: 'i' } },
+            { 'pattern.goal': { $regex: context, $options: 'i' } },
+            { 'pattern.context': { $regex: context, $options: 'i' } },
+          ];
+        }
+
+        const patterns = await MemoryPattern.find(filter)
+          .sort({ lastUsed: -1, confidence: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await MemoryPattern.countDocuments(filter);
+
+        return createSuccessResponse({
+          patterns,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_memory_patterns] Error:', error);
+        return handleToolError(error, 'listing memory patterns');
       }
     },
   },

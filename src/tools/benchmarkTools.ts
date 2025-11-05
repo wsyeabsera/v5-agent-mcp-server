@@ -12,6 +12,14 @@ import {
   runBenchmarkSuiteSchema,
   detectRegressionsSchema,
   getPerformanceMetricsSchema,
+  listBenchmarkTestsSchema,
+  getBenchmarkTestSchema,
+  listBenchmarkRunsSchema,
+  getBenchmarkRunSchema,
+  listBenchmarkSuitesSchema,
+  getBenchmarkSuiteSchema,
+  listRegressionsSchema,
+  getRegressionSchema,
 } from './schemas/benchmarkSchemas.js';
 import {
   BenchmarkTest,
@@ -308,6 +316,291 @@ export const benchmarkTools = {
       } catch (error: any) {
         logger.error('[get_performance_metrics] Error:', error);
         return handleToolError(error, 'getting performance metrics');
+      }
+    },
+  },
+
+  list_benchmark_tests: {
+    description: 'List benchmark tests with optional filters by category, tags, and priority.',
+    inputSchema: zodToJsonSchema(listBenchmarkTestsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listBenchmarkTestsSchema>) => {
+      try {
+        const validatedArgs = listBenchmarkTestsSchema.parse(args);
+        const { category, tags, priority, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_benchmark_tests] Listing tests with filters:', {
+          category,
+          tags,
+          priority,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (category) filter.category = category;
+        if (priority) filter.priority = priority;
+        if (tags && tags.length > 0) {
+          filter.tags = { $all: tags }; // All tags must match
+        }
+
+        const tests = await BenchmarkTest.find(filter)
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await BenchmarkTest.countDocuments(filter);
+
+        return createSuccessResponse({
+          tests,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_benchmark_tests] Error:', error);
+        return handleToolError(error, 'listing benchmark tests');
+      }
+    },
+  },
+
+  get_benchmark_test: {
+    description: 'Get a benchmark test by testId.',
+    inputSchema: zodToJsonSchema(getBenchmarkTestSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getBenchmarkTestSchema>) => {
+      try {
+        const validatedArgs = getBenchmarkTestSchema.parse(args);
+        const { testId } = validatedArgs;
+
+        logger.info(`[get_benchmark_test] Getting test: ${testId}`);
+
+        const test = await BenchmarkTest.findOne({ testId });
+        if (!test) {
+          return createErrorResponse(`Benchmark test not found: ${testId}`);
+        }
+
+        return createSuccessResponse(test);
+      } catch (error: any) {
+        logger.error('[get_benchmark_test] Error:', error);
+        return handleToolError(error, 'getting benchmark test');
+      }
+    },
+  },
+
+  list_benchmark_runs: {
+    description: 'List benchmark runs with optional filters by testId, status, agentConfigId, and date range.',
+    inputSchema: zodToJsonSchema(listBenchmarkRunsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listBenchmarkRunsSchema>) => {
+      try {
+        const validatedArgs = listBenchmarkRunsSchema.parse(args);
+        const { testId, status, agentConfigId, startDate, endDate, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_benchmark_runs] Listing runs with filters:', {
+          testId,
+          status,
+          agentConfigId,
+          startDate,
+          endDate,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (testId) filter.testId = testId;
+        if (status) filter['result.status'] = status;
+        if (agentConfigId) filter['execution.agentConfigId'] = agentConfigId;
+        if (startDate || endDate) {
+          filter.createdAt = {};
+          if (startDate) filter.createdAt.$gte = new Date(startDate);
+          if (endDate) filter.createdAt.$lte = new Date(endDate);
+        }
+
+        const runs = await BenchmarkRun.find(filter)
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await BenchmarkRun.countDocuments(filter);
+
+        return createSuccessResponse({
+          runs,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_benchmark_runs] Error:', error);
+        return handleToolError(error, 'listing benchmark runs');
+      }
+    },
+  },
+
+  get_benchmark_run: {
+    description: 'Get a benchmark run by runId.',
+    inputSchema: zodToJsonSchema(getBenchmarkRunSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getBenchmarkRunSchema>) => {
+      try {
+        const validatedArgs = getBenchmarkRunSchema.parse(args);
+        const { runId } = validatedArgs;
+
+        logger.info(`[get_benchmark_run] Getting run: ${runId}`);
+
+        const run = await BenchmarkRun.findOne({ runId });
+        if (!run) {
+          return createErrorResponse(`Benchmark run not found: ${runId}`);
+        }
+
+        return createSuccessResponse(run);
+      } catch (error: any) {
+        logger.error('[get_benchmark_run] Error:', error);
+        return handleToolError(error, 'getting benchmark run');
+      }
+    },
+  },
+
+  list_benchmark_suites: {
+    description: 'List benchmark suites with optional filters by date range.',
+    inputSchema: zodToJsonSchema(listBenchmarkSuitesSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listBenchmarkSuitesSchema>) => {
+      try {
+        const validatedArgs = listBenchmarkSuitesSchema.parse(args);
+        const { startDate, endDate, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_benchmark_suites] Listing suites with filters:', {
+          startDate,
+          endDate,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (startDate || endDate) {
+          filter.createdAt = {};
+          if (startDate) filter.createdAt.$gte = new Date(startDate);
+          if (endDate) filter.createdAt.$lte = new Date(endDate);
+        }
+
+        const suites = await BenchmarkSuite.find(filter)
+          .sort({ createdAt: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await BenchmarkSuite.countDocuments(filter);
+
+        return createSuccessResponse({
+          suites,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_benchmark_suites] Error:', error);
+        return handleToolError(error, 'listing benchmark suites');
+      }
+    },
+  },
+
+  get_benchmark_suite: {
+    description: 'Get a benchmark suite by suiteId.',
+    inputSchema: zodToJsonSchema(getBenchmarkSuiteSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getBenchmarkSuiteSchema>) => {
+      try {
+        const validatedArgs = getBenchmarkSuiteSchema.parse(args);
+        const { suiteId } = validatedArgs;
+
+        logger.info(`[get_benchmark_suite] Getting suite: ${suiteId}`);
+
+        const suite = await BenchmarkSuite.findOne({ suiteId });
+        if (!suite) {
+          return createErrorResponse(`Benchmark suite not found: ${suiteId}`);
+        }
+
+        return createSuccessResponse(suite);
+      } catch (error: any) {
+        logger.error('[get_benchmark_suite] Error:', error);
+        return handleToolError(error, 'getting benchmark suite');
+      }
+    },
+  },
+
+  list_regressions: {
+    description: 'List regressions with optional filters by testId, severity, resolved status, and date range.',
+    inputSchema: zodToJsonSchema(listRegressionsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listRegressionsSchema>) => {
+      try {
+        const validatedArgs = listRegressionsSchema.parse(args);
+        const { testId, severity, resolved, startDate, endDate, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_regressions] Listing regressions with filters:', {
+          testId,
+          severity,
+          resolved,
+          startDate,
+          endDate,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (testId) filter.testId = testId;
+        if (severity) filter.severity = severity;
+        if (resolved !== undefined) filter.resolved = resolved;
+        if (startDate || endDate) {
+          filter.detectedAt = {};
+          if (startDate) filter.detectedAt.$gte = new Date(startDate);
+          if (endDate) filter.detectedAt.$lte = new Date(endDate);
+        }
+
+        const regressions = await Regression.find(filter)
+          .sort({ detectedAt: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await Regression.countDocuments(filter);
+
+        return createSuccessResponse({
+          regressions,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_regressions] Error:', error);
+        return handleToolError(error, 'listing regressions');
+      }
+    },
+  },
+
+  get_regression: {
+    description: 'Get a regression by regressionId.',
+    inputSchema: zodToJsonSchema(getRegressionSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getRegressionSchema>) => {
+      try {
+        const validatedArgs = getRegressionSchema.parse(args);
+        const { regressionId } = validatedArgs;
+
+        logger.info(`[get_regression] Getting regression: ${regressionId}`);
+
+        const regression = await Regression.findOne({ regressionId });
+        if (!regression) {
+          return createErrorResponse(`Regression not found: ${regressionId}`);
+        }
+
+        return createSuccessResponse(regression);
+      } catch (error: any) {
+        logger.error('[get_regression] Error:', error);
+        return handleToolError(error, 'getting regression');
       }
     },
   },

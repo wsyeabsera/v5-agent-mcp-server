@@ -31,3 +31,11 @@ export const storeInsightSchema = z.object({
   rule: z.string().optional().describe('Machine-readable rule'),
 });
 
+// List memory patterns input schema
+export const listMemoryPatternsSchema = z.object({
+  patternType: z.enum(['query_pattern', 'plan_pattern', 'tool_sequence', 'error_pattern']).optional().describe('Filter by pattern type'),
+  context: z.string().optional().describe('Filter by context (partial match)'),
+  limit: z.number().optional().default(50).describe('Maximum number of results to return'),
+  skip: z.number().optional().default(0).describe('Number of results to skip'),
+});
+

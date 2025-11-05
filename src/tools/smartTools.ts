@@ -12,6 +12,10 @@ import {
   refinePlanSchema,
   trackCostSchema,
   optimizeCostSchema,
+  listCostTrackingsSchema,
+  getCostTrackingSchema,
+  listPlanQualityPredictionsSchema,
+  listToolRecommendationsSchema,
 } from './schemas/smartSchemas.js';
 import {
   Plan,
@@ -215,6 +219,184 @@ export const smartTools = {
       } catch (error: any) {
         logger.error('[optimize_cost] Error:', error);
         return handleToolError(error, 'optimizing cost');
+      }
+    },
+  },
+
+  list_cost_trackings: {
+    description: 'List cost tracking records with optional filters by taskId, planId, agentConfigId, and date range.',
+    inputSchema: zodToJsonSchema(listCostTrackingsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listCostTrackingsSchema>) => {
+      try {
+        const validatedArgs = listCostTrackingsSchema.parse(args);
+        const { taskId, planId, agentConfigId, startDate, endDate, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_cost_trackings] Listing cost trackings with filters:', {
+          taskId,
+          planId,
+          agentConfigId,
+          startDate,
+          endDate,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (taskId) filter.taskId = taskId;
+        if (planId) filter.planId = planId;
+        if (agentConfigId) filter.agentConfigId = agentConfigId;
+        if (startDate || endDate) {
+          filter.timestamp = {};
+          if (startDate) filter.timestamp.$gte = new Date(startDate);
+          if (endDate) filter.timestamp.$lte = new Date(endDate);
+        }
+
+        const costTrackings = await CostTracking.find(filter)
+          .sort({ timestamp: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await CostTracking.countDocuments(filter);
+
+        return createSuccessResponse({
+          costTrackings,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_cost_trackings] Error:', error);
+        return handleToolError(error, 'listing cost trackings');
+      }
+    },
+  },
+
+  get_cost_tracking: {
+    description: 'Get a cost tracking record by ID or taskId.',
+    inputSchema: zodToJsonSchema(getCostTrackingSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getCostTrackingSchema>) => {
+      try {
+        const validatedArgs = getCostTrackingSchema.parse(args);
+        const { id, taskId } = validatedArgs;
+
+        logger.info(`[get_cost_tracking] Getting cost tracking: ${id || taskId}`);
+
+        let costTracking;
+        if (id) {
+          costTracking = await CostTracking.findById(id);
+        } else if (taskId) {
+          // Get most recent cost tracking for this task
+          costTracking = await CostTracking.findOne({ taskId })
+            .sort({ timestamp: -1 });
+        }
+
+        if (!costTracking) {
+          return createErrorResponse(`Cost tracking not found: ${id || taskId}`);
+        }
+
+        return createSuccessResponse(costTracking);
+      } catch (error: any) {
+        logger.error('[get_cost_tracking] Error:', error);
+        return handleToolError(error, 'getting cost tracking');
+      }
+    },
+  },
+
+  list_plan_quality_predictions: {
+    description: 'List plan quality predictions with optional filters by planId and date range.',
+    inputSchema: zodToJsonSchema(listPlanQualityPredictionsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listPlanQualityPredictionsSchema>) => {
+      try {
+        const validatedArgs = listPlanQualityPredictionsSchema.parse(args);
+        const { planId, startDate, endDate, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_plan_quality_predictions] Listing predictions with filters:', {
+          planId,
+          startDate,
+          endDate,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (planId) filter.planId = planId;
+        if (startDate || endDate) {
+          filter.predictedAt = {};
+          if (startDate) filter.predictedAt.$gte = new Date(startDate);
+          if (endDate) filter.predictedAt.$lte = new Date(endDate);
+        }
+
+        const predictions = await PlanQualityPrediction.find(filter)
+          .sort({ predictedAt: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await PlanQualityPrediction.countDocuments(filter);
+
+        return createSuccessResponse({
+          predictions,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_plan_quality_predictions] Error:', error);
+        return handleToolError(error, 'listing plan quality predictions');
+      }
+    },
+  },
+
+  list_tool_recommendations: {
+    description: 'List tool recommendations with optional filters by requiredAction, context, and date range.',
+    inputSchema: zodToJsonSchema(listToolRecommendationsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listToolRecommendationsSchema>) => {
+      try {
+        const validatedArgs = listToolRecommendationsSchema.parse(args);
+        const { requiredAction, context, startDate, endDate, limit = 50, skip = 0 } = validatedArgs;
+
+        logger.info('[list_tool_recommendations] Listing recommendations with filters:', {
+          requiredAction,
+          context,
+          startDate,
+          endDate,
+          limit,
+          skip,
+        });
+
+        // Build filter
+        const filter: Record<string, any> = {};
+        if (requiredAction) filter.requiredAction = { $regex: requiredAction, $options: 'i' }; // Case-insensitive partial match
+        if (context) filter.context = { $regex: context, $options: 'i' };
+        if (startDate || endDate) {
+          filter.recommendedAt = {};
+          if (startDate) filter.recommendedAt.$gte = new Date(startDate);
+          if (endDate) filter.recommendedAt.$lte = new Date(endDate);
+        }
+
+        const recommendations = await ToolRecommendation.find(filter)
+          .sort({ recommendedAt: -1 })
+          .limit(limit)
+          .skip(skip)
+          .lean();
+
+        const total = await ToolRecommendation.countDocuments(filter);
+
+        return createSuccessResponse({
+          recommendations,
+          total,
+          limit,
+          skip,
+          hasMore: skip + limit < total,
+        });
+      } catch (error: any) {
+        logger.error('[list_tool_recommendations] Error:', error);
+        return handleToolError(error, 'listing tool recommendations');
       }
     },
   },

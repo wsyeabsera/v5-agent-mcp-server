@@ -64,17 +64,50 @@ app.post('/sse', async (req: Request, res: Response) => {
     // Handle tools/list
     if (method === 'tools/list') {
       logger.info('[MCP] Handling tools/list');
-      return res.json({
-        jsonrpc: '2.0',
-        result: {
-          tools: Object.entries(allTools).map(([name, tool]) => ({
+      try {
+        const tools = Object.entries(allTools).map(([name, tool]) => {
+          // Verify tool structure
+          if (!tool.description || !tool.inputSchema || typeof tool.handler !== 'function') {
+            logger.warn(`[MCP] Tool ${name} has invalid structure:`, {
+              hasDescription: !!tool.description,
+              hasInputSchema: !!tool.inputSchema,
+              hasHandler: typeof tool.handler === 'function',
+            });
+          }
+          return {
             name,
             description: tool.description,
             inputSchema: tool.inputSchema,
-          })),
-        },
-        id,
-      });
+          };
+        });
+        
+        // Log tool count and verify specific tools
+        logger.info(`[MCP] Returning ${tools.length} tools`);
+        const hasListPlanQuality = tools.some(t => t.name === 'list_plan_quality_predictions');
+        if (!hasListPlanQuality) {
+          logger.error('[MCP] list_plan_quality_predictions is NOT in tools list!');
+          logger.error('[MCP] Available tools with "list_plan":', tools.filter(t => t.name.includes('list_plan')).map(t => t.name));
+        }
+        
+        return res.json({
+          jsonrpc: '2.0',
+          result: {
+            tools,
+          },
+          id,
+        });
+      } catch (error: any) {
+        logger.error('[MCP] Error in tools/list:', error);
+        return res.json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32603,
+            message: 'Internal error generating tools list',
+            data: error.message,
+          },
+          id,
+        });
+      }
     }
 
     // Handle tools/call
@@ -352,5 +385,36 @@ app.listen(config.port, () => {
   logger.info(`MCP endpoint: http://localhost:${config.port}/sse`);
   logger.info(`Health check: http://localhost:${config.port}/health`);
   logger.info(`Total tools available: ${Object.keys(allTools).length}`);
+  
+  // Log verification of new tools
+  const newTools = [
+    'list_plan_quality_predictions',
+    'list_tool_recommendations',
+    'list_cost_trackings',
+    'get_cost_tracking',
+    'list_benchmark_tests',
+    'get_benchmark_test',
+    'list_benchmark_runs',
+    'get_benchmark_run',
+    'list_benchmark_suites',
+    'get_benchmark_suite',
+    'list_regressions',
+    'get_regression',
+    'list_memory_patterns',
+  ];
+  const missingTools = newTools.filter(t => !(t in allTools));
+  if (missingTools.length > 0) {
+    logger.warn(`Missing tools detected: ${missingTools.join(', ')}`);
+  } else {
+    logger.info(`✓ All ${newTools.length} new tools are registered`);
+  }
+  
+  // Verify list_plan_quality_predictions specifically
+  if ('list_plan_quality_predictions' in allTools) {
+    const tool = allTools.list_plan_quality_predictions;
+    logger.info(`✓ list_plan_quality_predictions: description=${!!tool.description}, inputSchema=${!!tool.inputSchema}, handler=${typeof tool.handler === 'function'}`);
+  } else {
+    logger.error('✗ list_plan_quality_predictions is NOT in allTools');
+  }
 });
 

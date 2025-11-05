@@ -48,3 +48,62 @@ export const getPerformanceMetricsSchema = z.object({
   endDate: z.string().optional().describe('End date (ISO 8601)'),
 });
 
+// List benchmark tests input schema
+export const listBenchmarkTestsSchema = z.object({
+  category: z.string().optional().describe('Filter by category'),
+  tags: z.array(z.string()).optional().describe('Filter by tags (all tags must match)'),
+  priority: z.enum(['critical', 'high', 'medium', 'low']).optional().describe('Filter by priority'),
+  limit: z.number().optional().default(50).describe('Maximum number of results to return'),
+  skip: z.number().optional().default(0).describe('Number of results to skip'),
+});
+
+// Get benchmark test input schema
+export const getBenchmarkTestSchema = z.object({
+  testId: z.string().describe('Test ID'),
+});
+
+// List benchmark runs input schema
+export const listBenchmarkRunsSchema = z.object({
+  testId: z.string().optional().describe('Filter by test ID'),
+  status: z.enum(['passed', 'failed', 'timeout', 'error']).optional().describe('Filter by status'),
+  agentConfigId: z.string().optional().describe('Filter by agent config ID'),
+  startDate: z.string().optional().describe('Filter by start date (ISO 8601 format)'),
+  endDate: z.string().optional().describe('Filter by end date (ISO 8601 format)'),
+  limit: z.number().optional().default(50).describe('Maximum number of results to return'),
+  skip: z.number().optional().default(0).describe('Number of results to skip'),
+});
+
+// Get benchmark run input schema
+export const getBenchmarkRunSchema = z.object({
+  runId: z.string().describe('Run ID'),
+});
+
+// List benchmark suites input schema
+export const listBenchmarkSuitesSchema = z.object({
+  startDate: z.string().optional().describe('Filter by start date (ISO 8601 format)'),
+  endDate: z.string().optional().describe('Filter by end date (ISO 8601 format)'),
+  limit: z.number().optional().default(50).describe('Maximum number of results to return'),
+  skip: z.number().optional().default(0).describe('Number of results to skip'),
+});
+
+// Get benchmark suite input schema
+export const getBenchmarkSuiteSchema = z.object({
+  suiteId: z.string().describe('Suite ID'),
+});
+
+// List regressions input schema
+export const listRegressionsSchema = z.object({
+  testId: z.string().optional().describe('Filter by test ID'),
+  severity: z.enum(['critical', 'high', 'medium', 'low']).optional().describe('Filter by severity'),
+  resolved: z.boolean().optional().describe('Filter by resolved status'),
+  startDate: z.string().optional().describe('Filter by start date (ISO 8601 format)'),
+  endDate: z.string().optional().describe('Filter by end date (ISO 8601 format)'),
+  limit: z.number().optional().default(50).describe('Maximum number of results to return'),
+  skip: z.number().optional().default(0).describe('Number of results to skip'),
+});
+
+// Get regression input schema
+export const getRegressionSchema = z.object({
+  regressionId: z.string().describe('Regression ID'),
+});
+
