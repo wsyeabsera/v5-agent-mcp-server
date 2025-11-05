@@ -92,11 +92,29 @@ Semantic search to find tools and prompts by natural language
 Initialize database with tools and prompts from remote server
 - See [Initialization](./categories/initialization.md)
 
+### Intelligence Features
+Memory, history, benchmarking, and smart features
+- See [Intelligence Features](./categories/intelligence-features.md)
+
+### Agent Workflows
+Complete workflows: Thought → Plan → Task Execution
+- See [Agent Workflows](./categories/agent-workflows.md)
+
 ## Examples
 
 - [API Client Example](./examples/api-client.js)
 - [React Components](./examples/react-components.md)
 - [Error Handling](./examples/error-handling.md)
+
+## Complete Page Templates
+
+Ready-to-use page implementations:
+
+- [Thought Generator Page](./pages/thought-generator-page.md) - Generate thoughts from queries
+- [Plan Builder Page](./pages/plan-builder-page.md) - Create and view plans
+- [Task Executor Page](./pages/task-executor-page.md) - Execute and monitor tasks
+- [Intelligence Dashboard](./pages/intelligence-dashboard.md) - Dashboard for memory, benchmarks, insights
+- [Agent Workflow Page](./pages/agent-workflow-page.md) - Complete workflow from query to execution
 
 ## Getting Started
 

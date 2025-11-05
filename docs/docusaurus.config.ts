@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://wsyeabsera.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/v5-agent-mcp-server/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'v5-clear-ai', // Usually your GitHub org/user name.
-  projectName: 'agents-mcp-server', // Usually your repo name.
+  organizationName: 'wsyeabsera', // Usually your GitHub org/user name.
+  projectName: 'v5-agent-mcp-server', // Usually your repo name.
 
   onBrokenLinks: 'throw',
 
@@ -79,7 +79,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/v5-clear-ai/agents-mcp-server',
+          href: 'https://github.com/wsyeabsera/v5-agent-mcp-server',
           label: 'GitHub',
           position: 'right',
         },
@@ -127,7 +127,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/v5-clear-ai/agents-mcp-server',
+              href: 'https://github.com/wsyeabsera/v5-agent-mcp-server',
             },
             {
               label: 'Development',

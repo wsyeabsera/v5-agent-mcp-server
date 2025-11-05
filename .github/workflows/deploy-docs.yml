@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'packages/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -33,13 +32,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile
+          npm ci
 
       - name: Build documentation
         working-directory: docs
         run: |
-          yarn install --frozen-lockfile
-          yarn build
+          npm ci
+          npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
