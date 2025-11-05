@@ -26,6 +26,7 @@ import {
 } from './taskStateMachine.js';
 import { withTimeout, TimeoutError } from './taskTimeout.js';
 import { aiGenerator } from './aiGeneration.js';
+import { calculateSuccessMetrics } from './patternExtractor.js';
 // Import individual tool groups to avoid circular dependency with taskTools
 import { mcpClientTools } from '../tools/mcpClientTools.js';
 import { toolManagementTools } from '../tools/management/index.js';
@@ -34,6 +35,9 @@ import { mcpPromptTools } from '../tools/mcpPromptTools.js';
 import { localPromptTools } from '../tools/localPromptTools.js';
 import { thoughtTools } from '../tools/thoughtTools.js';
 import { planTools } from '../tools/planTools.js';
+import { historyTools } from '../tools/historyTools.js';
+import { observeTaskExecution } from './memorySystem.js';
+import { trackTaskCost } from './costTracker.js';
 
 // Combine all tools except taskTools to avoid circular dependency
 const allTools = {
@@ -155,6 +159,9 @@ export class TaskExecutor {
         if (!stepResult.success) {
           await this.updateTaskStatus(taskId, 'failed', stepResult.error);
           await this.updatePlanStatus(task.planId, 'failed');
+          
+          // Learn from failed task
+          await this.learnFromTask(taskId, task.planId, 'failed', task);
           return;
         }
 
@@ -172,6 +179,9 @@ export class TaskExecutor {
       // All steps completed
       await this.updateTaskStatus(taskId, 'completed');
       await this.updatePlanStatus(task.planId, 'completed');
+      
+      // Learn from completed task
+      await this.learnFromTask(taskId, task.planId, 'completed', task);
     } catch (error: any) {
       logger.error(`[TaskExecutor] Error executing task ${taskId}:`, error);
       const errorContext = createErrorContext('task', 0, error);
@@ -179,6 +189,13 @@ export class TaskExecutor {
       
       await this.updateTaskStatus(taskId, 'failed', error.message);
       await this.updatePlanStatus(task.planId, 'failed');
+      
+      // Learn from failed task
+      const task = await Task.findById(taskId);
+      if (task) {
+        await this.learnFromTask(taskId, task.planId, 'failed', task);
+      }
+      
       throw error;
     } finally {
       // Release lock
@@ -772,6 +789,60 @@ export class TaskExecutor {
 
     // Continue execution - this will re-execute the current step with user inputs applied
     await this.executeTask(taskId);
+  }
+
+  /**
+   * Learn from task completion - extracts patterns and updates metrics
+   */
+  private async learnFromTask(
+    taskId: string,
+    planId: string,
+    status: 'completed' | 'failed',
+    task: any
+  ): Promise<void> {
+    try {
+      // Calculate success metrics
+      const metrics = calculateSuccessMetrics(task);
+
+      // Call learn_from_task tool (backward compatibility)
+      const result = await historyTools.learn_from_task.handler({
+        taskId,
+        planId,
+        status,
+        metrics,
+        insights: [], // Can be enhanced later to extract insights automatically
+      });
+
+      if (!result.success) {
+        logger.warn(`[TaskExecutor] Failed to learn from task ${taskId}:`, result.message);
+      } else {
+        logger.debug(`[TaskExecutor] Learned from task ${taskId}: ${result.data?.patternsLearned || 0} patterns, ${result.data?.insightsStored || 0} insights`);
+      }
+
+      // Also call new memory system for enhanced learning
+      try {
+        const plan = await Plan.findById(planId);
+        if (plan) {
+          await observeTaskExecution(task, plan, null);
+          logger.debug(`[TaskExecutor] Memory system observed task ${taskId}`);
+        }
+      } catch (memoryError: any) {
+        logger.warn(`[TaskExecutor] Memory system observation failed for task ${taskId}:`, memoryError.message);
+        // Don't fail the whole task if memory system fails
+      }
+
+      // Track cost for the task
+      try {
+        await trackTaskCost(taskId, planId, task.agentConfigId);
+        logger.debug(`[TaskExecutor] Cost tracked for task ${taskId}`);
+      } catch (costError: any) {
+        logger.warn(`[TaskExecutor] Cost tracking failed for task ${taskId}:`, costError.message);
+        // Don't fail the whole task if cost tracking fails
+      }
+    } catch (error: any) {
+      // Don't fail task execution if learning fails
+      logger.error(`[TaskExecutor] Error learning from task ${taskId}:`, error);
+    }
   }
 }
 

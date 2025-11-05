@@ -10,6 +10,8 @@ export const config = {
   pineconeApiKey: process.env.PINECONE_API_KEY || '',
   pineconeToolsIndexName: process.env.PINECONE_TOOLS_INDEX_NAME || process.env.PINECONE_INDEX_NAME || '',
   pineconePromptsIndexName: process.env.PINECONE_PROMPTS_INDEX_NAME || '',
+  pineconeTasksIndexName: process.env.PINECONE_TASKS_INDEX_NAME || 'tasks-similarity',
+  pineconeParameterMemoryIndexName: process.env.PINECONE_PARAMETER_MEMORY_INDEX_NAME || 'parameter-memory-index',
   ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
   aiServerUrl: process.env.AI_SERVER_URL || 'http://localhost:3002/stream',
 };

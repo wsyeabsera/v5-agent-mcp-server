@@ -40,3 +40,23 @@ export const listTasksSchema = z.object({
   skip: z.number().optional().default(0).describe('Number of results to skip'),
 });
 
+// Summarize task input schema
+export const summarizeTaskSchema = z.object({
+  taskId: z.string().describe('Task ID to summarize'),
+  format: z
+    .enum(['brief', 'detailed', 'technical'])
+    .optional()
+    .default('detailed')
+    .describe('Summary format: brief (2-3 paragraphs), detailed (full narrative), or technical (includes raw data)'),
+  includeInsights: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Whether to include insights and patterns in the summary'),
+  includeRecommendations: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Whether to include recommendations and next steps in the summary'),
+});
+

@@ -8,6 +8,9 @@ export { localPromptTools } from './localPromptTools.js';
 export { thoughtTools } from './thoughtTools.js';
 export { planTools } from './planTools.js';
 export { taskTools } from './taskTools.js';
+export { historyTools } from './historyTools.js';
+export { memoryTools } from './memoryTools.js';
+export { smartTools } from './smartTools.js';
 
 // Combined tools object for easy access
 import { mcpClientTools } from './mcpClientTools.js';
@@ -19,6 +22,10 @@ import { localPromptTools } from './localPromptTools.js';
 import { thoughtTools } from './thoughtTools.js';
 import { planTools } from './planTools.js';
 import { taskTools } from './taskTools.js';
+import { historyTools } from './historyTools.js';
+import { memoryTools } from './memoryTools.js';
+import { smartTools } from './smartTools.js';
+import { benchmarkTools } from './benchmarkTools.js';
 
 export const allTools = {
   ...mcpClientTools,
@@ -30,5 +37,9 @@ export const allTools = {
   ...thoughtTools,
   ...planTools,
   ...taskTools,
+  ...historyTools,
+  ...memoryTools,
+  ...smartTools,
+  ...benchmarkTools,
 };
 

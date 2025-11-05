@@ -11,9 +11,11 @@ import {
   resumeTaskSchema,
   getTaskSchema,
   listTasksSchema,
+  summarizeTaskSchema,
 } from './schemas/taskSchemas.js';
 import { Task, Plan } from '../models/index.js';
 import { taskExecutor } from '../utils/taskExecutor.js';
+import { taskSummaryGenerator } from '../utils/taskSummaryGenerator.js';
 
 // ========== Task Tools ==========
 export const taskTools = {
@@ -250,6 +252,50 @@ export const taskTools = {
       } catch (error: any) {
         logger.error('[list_tasks] Error:', error);
         return handleToolError(error, 'listing tasks');
+      }
+    },
+  },
+
+  summarize_task: {
+    description:
+      'Generate an intelligent, first-person conversational markdown summary of task execution. Provides insights, recommendations, and a clear narrative of what happened.',
+    inputSchema: zodToJsonSchema(summarizeTaskSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof summarizeTaskSchema>) => {
+      try {
+        const validatedArgs = summarizeTaskSchema.parse(args);
+        const { taskId, format, includeInsights, includeRecommendations } = validatedArgs;
+
+        logger.info(`[summarize_task] Generating summary for task: ${taskId}`, {
+          format,
+          includeInsights,
+          includeRecommendations,
+        });
+
+        // Verify task exists
+        const task = await Task.findById(taskId);
+        if (!task) {
+          return createErrorResponse(`Task not found: ${taskId}`);
+        }
+
+        // Generate summary
+        const summary = await taskSummaryGenerator.generateSummary(
+          taskId,
+          format,
+          includeInsights,
+          includeRecommendations,
+          task.agentConfigId
+        );
+
+        // Return summary as markdown text
+        return createSuccessResponse({
+          taskId,
+          summary,
+          format,
+          generatedAt: new Date().toISOString(),
+        });
+      } catch (error: any) {
+        logger.error('[summarize_task] Error:', error);
+        return handleToolError(error, 'generating task summary');
       }
     },
   },

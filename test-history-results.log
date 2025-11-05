@@ -1,0 +1,119 @@
+🧪 HISTORY TOOLS TEST SUITE
+==========================
+
+[0;34m📊 Phase 1: Execute a Task to Generate Learning Data[0m
+------------------------------------------------------------
+Test 1: Creating and executing a task...
+  Thought ID: 690b2cc1f4693b63f9327eac
+  Plan ID: 690b2cc4f4693b63f9327eb4
+  Task ID: 690b2cc4f4693b63f9327eb8
+  Waiting 10 seconds for task execution and learning...
+  Task Status: completed
+[0;32m✅ PASS[0m: Task completed (status: completed)
+
+[0;34m📊 Phase 2: Test History Query Tools[0m
+-------------------------------------------
+Test 2: get_similar_tasks
+[0;31m❌ FAIL[0m: get_similar_tasks tool call
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"tasks\": [\n    {\n      \"taskId\": \"690b2cc4f4693b63f9327eb8\",\n      \"query\": \"List all facilities\",\n      \"goal\": \"Retrieve a list of all waste management facilities\",\n      \"status\": \"completed\",\n      \"similarity\": 0.5,\n      \"executionTime\": 0,\n      \"successMetrics\": {\n        \"executionTime\": 0,\n        \"stepsCompleted\": 0,\n        \"retries\": 0,\n        \"userInputsRequired\": 0\n      },\n      \"createdAt\": \"2025-11-05T10:53:56.983Z\"\n    }\n  ],\n  \"count\": 1,\n  \"message\": \"Results from MongoDB text search (Pinecone not configured)\"\n}"
+      }
+    ]
+  },
+  "id": 1
+}
+  Found 1 similar tasks
+[0;32m✅ PASS[0m: Similar tasks found
+{
+  "taskId": "690b2cc4f4693b63f9327eb8",
+  "query": "List all facilities",
+  "goal": "Retrieve a list of all waste management facilities",
+  "similarity": 0.5,
+  "status": "completed"
+}
+
+Test 3: get_successful_plans
+[0;31m❌ FAIL[0m: get_successful_plans tool call
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"plans\": [],\n  \"count\": 0,\n  \"message\": \"Successful plans found\"\n}"
+      }
+    ]
+  },
+  "id": 1
+}
+  Found 0 successful plans
+[1;33m⚠️  INFO[0m: No successful plans found yet (may be expected for first run)
+
+Test 4: get_tool_performance
+[0;31m❌ FAIL[0m: get_tool_performance tool call
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"toolName\": \"list_facilities\",\n  \"totalExecutions\": 1,\n  \"successRate\": 0,\n  \"avgDuration\": 0,\n  \"successCount\": 0,\n  \"failureCount\": 1,\n  \"commonErrors\": [],\n  \"optimalContext\": [],\n  \"recommendations\": [\n    \"Low success rate. Consider reviewing tool usage patterns.\"\n  ],\n  \"message\": \"Tool performance data retrieved\"\n}"
+      }
+    ]
+  },
+  "id": 1
+}
+  Tool executions tracked: 1
+[0;32m✅ PASS[0m: Tool performance data found
+{
+  "toolName": "list_facilities",
+  "totalExecutions": 1,
+  "successRate": 0,
+  "avgDuration": 0,
+  "successCount": 0,
+  "failureCount": 1
+}
+
+Test 5: get_agent_insights
+[0;31m❌ FAIL[0m: get_agent_insights tool call
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"insights\": [],\n  \"count\": 0,\n  \"message\": \"Agent insights retrieved\"\n}"
+      }
+    ]
+  },
+  "id": 1
+}
+  Found 0 insights
+[1;33m⚠️  INFO[0m: No insights found yet (may be expected for first run)
+
+Test 6: learn_from_task (manual test)
+[0;32m✅ PASS[0m: learn_from_task tool call
+  Patterns learned: 1
+  Insights stored: 2
+[0;32m✅ PASS[0m: Learning completed
+
+[0;34m📊 Phase 3: Integration Test - Verify Learning Happened[0m
+--------------------------------------------------------------
+Test 7: Verify task similarity was stored
+[0;32m✅ PASS[0m: Task similarity stored correctly
+
+Test 8: Verify plan pattern was stored
+[1;33m⚠️  INFO[0m: Plan pattern may not be stored yet (only stored for completed tasks)
+
+==========================================
+[0;34mTest Summary[0m
+==========================================
+[0;32mPassed: 6[0m
+[0;31mFailed: 4[0m
+
+[0;31m❌ Some tests failed[0m
