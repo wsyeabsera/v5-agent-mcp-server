@@ -331,7 +331,7 @@ export const historyTools = {
 
         const query: any = { agentType };
         if (insightType) {
-          query.type = insightType;
+          query.insightType = insightType;
         }
 
         const insights = await AgentInsight.find(query)
@@ -340,13 +340,13 @@ export const historyTools = {
           .lean();
 
         return createSuccessResponse({
-          insights: insights.map(i => ({
-            type: i.type,
+          insights: insights.map((i: any) => ({
+            insightType: i.insightType,
             insight: i.insight,
             confidence: i.confidence,
             evidence: i.evidence,
             createdAt: i.createdAt,
-            lastValidated: i.lastValidated,
+            validatedAt: i.validatedAt,
           })),
           count: insights.length,
           message: 'Agent insights retrieved',

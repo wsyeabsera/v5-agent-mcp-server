@@ -101,11 +101,12 @@ function analyzeFailure(task: any, plan: any, failureReason?: string): {
     }
   }
 
-  // Check retries
-  const retryCount = Array.from(task.retryCount.values()).reduce((sum, count) => sum + count, 0);
-  if (retryCount > 0) {
-    issues.push(`Multiple retries (${retryCount}) indicate reliability issues`);
-  }
+    // Check retries
+    const retryCountMap = task.retryCount as Map<string, number> | undefined;
+    const retryCount = retryCountMap ? Array.from(retryCountMap.values()).reduce((sum: number, count: number) => sum + count, 0) : 0;
+    if (retryCount > 0) {
+      issues.push(`Multiple retries (${retryCount}) indicate reliability issues`);
+    }
 
   // Check user input requirements
   if (task.pendingUserInputs.length > 0) {
@@ -147,6 +148,7 @@ async function findSimilarSuccessfulPlans(plan: any): Promise<any[]> {
         query: plan.userQuery,
         status: 'completed',
         limit: 5,
+        minSimilarity: 0.5,
       });
     } catch (error: any) {
       logger.warn('[PlanRefiner] Error getting similar tasks:', error.message);
@@ -157,12 +159,13 @@ async function findSimilarSuccessfulPlans(plan: any): Promise<any[]> {
 
     // Add patterns
     for (const pattern of similarPatterns) {
+      const patternData = pattern as any;
       similarPlans.push({
         type: 'pattern',
-        goal: pattern.pattern?.goal,
-        steps: pattern.pattern?.steps || [],
-        successRate: pattern.successMetrics?.successRate || 0.7,
-        evidence: pattern.evidence,
+        goal: patternData.pattern?.goal,
+        steps: patternData.pattern?.steps || [],
+        successRate: patternData.successMetrics?.successRate || 0.7,
+        evidence: patternData.evidence || [],
       });
     }
 

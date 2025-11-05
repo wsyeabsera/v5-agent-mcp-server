@@ -96,13 +96,16 @@ export async function predictPlanQuality(plan: any): Promise<PlanQualityPredicti
 
     return {
       successProbability,
-      confidence: calculateConfidence(historicalComparison),
+      confidence: calculateConfidence(historicalComparison.baseline),
       riskLevel,
       estimatedDuration,
       estimatedCost,
       riskFactors,
       recommendations,
-      comparison: historicalComparison,
+      comparison: {
+        similarPlans: historicalComparison.similarPlans,
+        baseline: historicalComparison.baseline,
+      },
     };
   } catch (error: any) {
     logger.error('[PlanQualityPredictor] Error predicting plan quality:', error);
@@ -143,23 +146,23 @@ async function analyzeStepSequence(plan: any): Promise<{ score: number; issues: 
     }
   }
 
-  // Check if step sequence matches known patterns
-  const queryPattern = extractQueryPattern(plan.userQuery);
-  const memory = await remember(queryPattern);
-  
-  let patternMatchScore = 0;
-  if (memory.patterns.length > 0) {
-    // Check if our step sequence matches any successful patterns
-    const matchedPattern = memory.patterns.find((p: any) => {
-      const patternSteps = p.pattern?.steps || [];
-      return patternSteps.length === stepSequence.length &&
-        patternSteps.every((step: string, idx: number) => step === stepSequence[idx]);
-    });
+    // Check if step sequence matches known patterns
+    const queryPattern = extractQueryPattern(plan.userQuery || '');
+    const memory = await remember(queryPattern);
     
-    if (matchedPattern) {
-      patternMatchScore = matchedPattern.successMetrics?.successRate || 0.5;
+    let patternMatchScore = 0;
+    if (memory.patterns && memory.patterns.length > 0) {
+      // Check if our step sequence matches any successful patterns
+      const matchedPattern = memory.patterns.find((p: any) => {
+        const patternSteps = p.pattern?.steps || [];
+        return patternSteps.length === stepSequence.length &&
+          patternSteps.every((step: string, idx: number) => step === stepSequence[idx]);
+      });
+      
+      if (matchedPattern) {
+        patternMatchScore = matchedPattern.successMetrics?.successRate || 0.5;
+      }
     }
-  }
 
   const baseScore = patternMatchScore > 0 ? patternMatchScore : 0.7; // Default score
   const penalty = issues.length * 0.1;
@@ -242,8 +245,10 @@ function validateParameters(plan: any): { validityScore: number; issues: string[
  */
 async function compareWithHistory(plan: any): Promise<{
   similarPlans: Array<{ planId: string; successRate: number; similarity: number }>;
-  avgSuccessRate: number;
-  avgDuration: number;
+  baseline: {
+    avgSuccessRate: number;
+    avgDuration: number;
+  };
 }> {
   const queryPattern = extractQueryPattern(plan.userQuery);
   const stepSequence = extractPlanPattern(plan);
@@ -251,18 +256,17 @@ async function compareWithHistory(plan: any): Promise<{
   // Find similar plans
   const similarPatterns = await PlanPattern.find({
     $or: [
-      { 'pattern.goal': { $regex: queryPattern, $options: 'i' } },
-      { 'pattern.query': { $regex: queryPattern, $options: 'i' } },
+      { goalPattern: { $regex: queryPattern, $options: 'i' } },
     ],
   })
-    .sort({ 'successMetrics.successRate': -1, usageCount: -1 })
+    .sort({ successRate: -1, usageCount: -1 })
     .limit(10)
     .lean();
 
   const similarPlans = similarPatterns.map((p: any) => ({
     planId: p.patternId,
-    successRate: p.successMetrics?.successRate || 0.5,
-    similarity: calculateSimilarity(stepSequence, p.pattern?.steps || []),
+    successRate: p.successRate || 0.5,
+    similarity: calculateSimilarity(stepSequence, p.stepSequence || []),
   }));
 
   const avgSuccessRate = similarPlans.length > 0
@@ -270,13 +274,15 @@ async function compareWithHistory(plan: any): Promise<{
     : 0.7;
 
   const avgDuration = similarPatterns.length > 0
-    ? similarPatterns.reduce((sum, p) => sum + (p.successMetrics?.avgExecutionTime || 5000), 0) / similarPatterns.length
+    ? similarPatterns.reduce((sum, p) => sum + (p.avgExecutionTime || 5000), 0) / similarPatterns.length
     : 5000;
 
   return {
     similarPlans: similarPlans.slice(0, 5),
-    avgSuccessRate,
-    avgDuration,
+    baseline: {
+      avgSuccessRate,
+      avgDuration,
+    },
   };
 }
 

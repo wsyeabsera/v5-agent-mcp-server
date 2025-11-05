@@ -148,7 +148,7 @@ async function analyzeToolPerformance(
     // Get performance metrics
     const successRate = toolPerf?.performance?.successRate || 0.5; // Default for new tools
     const avgDuration = toolPerf?.performance?.avgDuration || 5000; // Default 5 seconds
-    const reliability = toolPerf?.successMetrics?.reliability || 0.7; // Default
+    const reliability = toolPerf?.performance?.successRate || 0.7; // Use success rate as reliability proxy
 
     // Check context fit
     const contextFit = calculateContextFit(toolPerf, context);

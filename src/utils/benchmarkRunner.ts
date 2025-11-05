@@ -53,7 +53,22 @@ export async function executeTest(
       enableToolSearch: true,
     });
 
-    if (!thoughtResult.success) {
+    // Parse response
+    let thoughtResultData: any;
+    if (typeof thoughtResult === 'string') {
+      try {
+        thoughtResultData = JSON.parse(thoughtResult);
+      } catch {
+        thoughtResultData = { success: false, message: thoughtResult };
+      }
+    } else {
+      thoughtResultData = thoughtResult;
+    }
+
+    // Check if result indicates success
+    const isThoughtSuccess = thoughtResultData.success !== false && (thoughtResultData.data?.thoughtId || thoughtResultData.thoughtId);
+    
+    if (!isThoughtSuccess) {
       return {
         runId,
         testId,
@@ -66,11 +81,11 @@ export async function executeTest(
           retries: 0,
           userInputsRequired: 0,
         },
-        error: `Failed to generate thought: ${thoughtResult.message}`,
+        error: `Failed to generate thought: ${thoughtResultData.message || 'Unknown error'}`,
       };
     }
 
-    const thoughtId = thoughtResult.data?.thoughtId;
+    const thoughtId = thoughtResultData.data?.thoughtId || thoughtResultData.thoughtId;
     if (!thoughtId) {
       return {
         runId,
@@ -95,7 +110,22 @@ export async function executeTest(
       enableToolSearch: true,
     });
 
-    if (!planResult.success) {
+    // Parse response
+    let planResultData: any;
+    if (typeof planResult === 'string') {
+      try {
+        planResultData = JSON.parse(planResult);
+      } catch {
+        planResultData = { success: false, message: planResult };
+      }
+    } else {
+      planResultData = planResult;
+    }
+
+    // Check if result indicates success
+    const isPlanSuccess = planResultData.success !== false && (planResultData.data?.planId || planResultData.planId);
+    
+    if (!isPlanSuccess) {
       return {
         runId,
         testId,
@@ -108,11 +138,11 @@ export async function executeTest(
           retries: 0,
           userInputsRequired: 0,
         },
-        error: `Failed to generate plan: ${planResult.message}`,
+        error: `Failed to generate plan: ${planResultData.message || 'Unknown error'}`,
       };
     }
 
-    const planId = planResult.data?.planId;
+    const planId = planResultData.data?.planId || planResultData.planId;
     if (!planId) {
       return {
         runId,
@@ -167,9 +197,9 @@ export async function executeTest(
     }
 
     // Check if result indicates success
-    const isSuccess = taskResultData.success !== false && taskResultData.data?.taskId;
+    const isTaskSuccess = taskResultData.success !== false && taskResultData.data?.taskId;
     
-    if (!isSuccess) {
+    if (!isTaskSuccess) {
       return {
         runId,
         testId,

@@ -187,13 +187,16 @@ export class TaskExecutor {
       const errorContext = createErrorContext('task', 0, error);
       logger.error(`[TaskExecutor] Error context:`, errorContext);
       
-      await this.updateTaskStatus(taskId, 'failed', error.message);
-      await this.updatePlanStatus(task.planId, 'failed');
-      
-      // Learn from failed task
-      const task = await Task.findById(taskId);
-      if (task) {
-        await this.learnFromTask(taskId, task.planId, 'failed', task);
+      // Get task before updating status
+      const failedTask = await Task.findById(taskId);
+      if (failedTask) {
+        await this.updateTaskStatus(taskId, 'failed', error.message);
+        await this.updatePlanStatus(failedTask.planId, 'failed');
+        
+        // Learn from failed task
+        await this.learnFromTask(taskId, failedTask.planId, 'failed', failedTask);
+      } else {
+        await this.updateTaskStatus(taskId, 'failed', error.message);
       }
       
       throw error;
@@ -813,10 +816,22 @@ export class TaskExecutor {
         insights: [], // Can be enhanced later to extract insights automatically
       });
 
-      if (!result.success) {
-        logger.warn(`[TaskExecutor] Failed to learn from task ${taskId}:`, result.message);
+      // Parse response
+      let resultData: any;
+      if (typeof result === 'string') {
+        try {
+          resultData = JSON.parse(result);
+        } catch {
+          resultData = { success: false, message: result };
+        }
       } else {
-        logger.debug(`[TaskExecutor] Learned from task ${taskId}: ${result.data?.patternsLearned || 0} patterns, ${result.data?.insightsStored || 0} insights`);
+        resultData = result;
+      }
+
+      if (!resultData.success) {
+        logger.warn(`[TaskExecutor] Failed to learn from task ${taskId}:`, resultData.message || 'Unknown error');
+      } else {
+        logger.debug(`[TaskExecutor] Learned from task ${taskId}: ${resultData.data?.patternsLearned || 0} patterns, ${resultData.data?.insightsStored || 0} insights`);
       }
 
       // Also call new memory system for enhanced learning
